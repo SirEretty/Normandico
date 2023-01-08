@@ -109,7 +109,6 @@ class database:
                             print(f"[DATABASE][INTABLE] {currentTime} le mot {wordFrench} n'est pas présent dans la table 'french'.")
                     except mysql.connector.Error as err:
                         error1 = str(err)
-                        db.rollback()
                         db.close()
                         print(f"[DATABSE][INTABLE] {currentTime} {error1}")
                         return True
@@ -133,7 +132,6 @@ class database:
                             print(f"[DATABASE][INTABLE] {currentTime} le mot {wordNormand} n'est pas présent dans la table 'normand'.")
                     except mysql.connector.Error as err:
                         error1 = str(err)
-                        db.rollback()
                         db.close()
                         print(f"[DATABSE][INTABLE] {currentTime} {error1}")
                         return True
@@ -165,7 +163,6 @@ class database:
                         db.commit()
                         print(f"[DATABASE][ADDWORD] {currentTime} COMMIT effectué!")
                     except mysql.connector.Error as err:
-                        db.rollback()
                         db.close()
                         error1 = str(err)
                         print(f"[DATABSE][ADDWORD] {currentTime} {error1}")
@@ -177,31 +174,28 @@ class database:
                         db.commit()
                         print(f"[DATABASE][ADDWORD] {currentTime} COMMIT effectué!")
                     except mysql.connector.Error as err:
-                        db.rollback()
                         db.close()
                         error1 = str(err)
                         print(f"[DATABSE][ADDWORD] {currentTime} {error1}")
 
                     #Modifies la colonne normandID du mot français qui est lié
-                    print(f"[DATABASE][ADDWORD] {currentTime} UPDATE french SET normandID = (SELECT ID FROM normand WHERE word = '{wordNormand}')")
+                    print(f"[DATABASE][ADDWORD] {currentTime} UPDATE french SET normandID = (SELECT ID FROM normand WHERE word = '{wordNormand}') WHERE word = '{wordFrench}'")
                     try:
-                        c.execute(f"UPDATE french SET normandID = (SELECT ID FROM normand WHERE word = '{wordNormand}')")
+                        c.execute(f"UPDATE french SET normandID = (SELECT ID FROM normand WHERE word = '{wordNormand}') WHERE word = '{wordFrench}'")
                         db.commit()
                         print(f"[DATABASE][ADDWORD] {currentTime} COMMIT effectué!")
                     except mysql.connector.Error as err:
-                        db.rollback()
                         db.close()
                         error1 = str(err)
                         print(f"[DATABSE][ADDWORD] {currentTime} {error1}")
                     
                     #Modifies la colonne frenchID du mot normand qui est lié
-                    print(f"[DATABASE][ADDWORD] {currentTime} UPDATE normand SET frenchID = (SELECT ID FROM french WHERE word = '{wordNormand}')")
+                    print(f"[DATABASE][ADDWORD] {currentTime} UPDATE normand SET frenchID = (SELECT ID FROM french WHERE word = '{wordFrench}') WHERE word = '{wordNormand}'")
                     try:
-                        c.execute(f"UPDATE normand SET frenchID = (SELECT ID FROM french WHERE word = '{wordFrench}')")
+                        c.execute(f"UPDATE normand SET frenchID = (SELECT ID FROM french WHERE word = '{wordFrench}') WHERE word = '{wordNormand}'")
                         db.commit()
                         print(f"[DATABASE][ADDWORD] {currentTime} COMMIT effectué!")
                     except mysql.connector.Error as err:
-                        db.rollback()
                         db.close()
                         error1 = str(err)
                         print(f"[DATABSE][ADDWORD] {currentTime} {error1}")
@@ -229,7 +223,6 @@ class database:
                         db.commit()
                         print(f"[DATABASE][REMOVEWORD] {currentTime} COMMIT executé.")
                     except:
-                        db.rollback()
                         print(f"[DATABASE][REMOVEWORD] {currentTime} COMMIT non executé.")
 
                     print(f"[DATABASE][REMOVEWORD] DELETE FROM normand WHERE ID = {ID}")
@@ -238,9 +231,11 @@ class database:
                         db.commit()
                         print(f"[DATABASE][REMOVEWORD] {currentTime} COMMIT executé.")
                     except:
-                        db.rollback()
+                        print(f"[DATABASE][REMOVEWORD] {currentTime} COMMIT non executé.")
 
-                    c.execute(f"SET FOREIGN_KEY_CHECKS=1;")
+                    c.execute(f"""
+                        SET FOREIGN_KEY_CHECKS=1;
+                    """)
                     db.commit()
 
         except mysql.connector.Error as err:
@@ -250,8 +245,54 @@ class database:
             db.close()
 
     def modifyWord(self,ID,frenchWord,normandWord):
-        pass
-                
+        currentTime = time.strftime("%x-%X")
+        try:
+            with mysql.connector.connect(**self.connexion) as db:
+                with db.cursor() as c:
+                    
+                    print(f"[DATABASE][MODIFYWORD] {currentTime} UPDATE french SET word = '{frenchWord}' WHERE ID = {ID}.")
+                    try:
+                        c.execute(f"UPDATE french SET word = '{frenchWord}' WHERE ID = {ID} ")
+                        db.commit()
+                        print(f"[DATABASE][MODIFYWORD] {currentTime} COMMIT executé.")
+                    except mysql.connector.Error as err:
+                        print(f"[DATABASE][MODIFYWORD] {currentTime} Impossible de modifier le mot français.")
+                        print(f"[DATABASE][MODIFYWORD] {currentTime} {error1}")
+                    
+                    print(f"[DATABASE][MODIFYWORD] {currentTime} UPDATE normand SET word = '{normandWord}' WHERE ID = {ID}.")
+                    try:
+                        c.execute(f"UPDATE normand SET word = '{normandWord}' WHERE ID = {ID} ")
+                        db.commit()
+                    except mysql.connector.Error as err:
+                        print(f"[DATABASE][MODIFYWORD] {currentTime} Impossible de modifier le mot français")
+                        print(f"[DATABASE][MODIFYWORD] {currentTime} {error1}")
+
+        except mysql.connector.Error as err:
+            error1 = str(err)
+            print(f"[DATABASE][MODIFYWORD] {currentTime} Impossible de se connecter à la base de données")
+            print(f"[DATABASE][MODIFYWORD] {currentTime} {error1}")
+            db.close()
+
+    def getWord(self,ID):
+        currentTime = time.strftime("%x-%X")
+
+        result : dict = { "word" : []}
+
+        try:
+            with mysql.connector.connect(**self.connexion) as db:
+                with db.cursor() as c:
+                    
+                    try:
+                        pass
+                    except mysql.connector.Error as err:
+                        pass
+
+        except mysql.connector.Error as err:
+            error1 = str(err)
+            print(f"[DATABASE][GETWORD] {currentTime} Impossible de se connecter à la base de données")
+            print(f"[DATABASE][GETWORD] {currentTime} {error1}")
+            db.close()
+
 access = None
 
 try:
@@ -267,5 +308,11 @@ except:
 DATABASE = database(access['host'],access['user'],access['password'],access['database'])
 #DATABASE.addWord("bonjour","bonjou")
 DATABASE.addWord("bonjour","bonjou")
-                
+DATABASE.addWord("bonjoure","bonjoue")      
+DATABASE.addWord("bonjoura","bonjoua")
+DATABASE.addWord("bonjouri","bonjoui") 
 
+DATABASE.removeWord(4)
+DATABASE.removeWord(5)
+DATABASE.removeWord(6)
+DATABASE.removeWord(7)
