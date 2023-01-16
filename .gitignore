@@ -1,2 +1,4 @@
 *.vscode
 *api-normandico
+*normandico
+*pyc
