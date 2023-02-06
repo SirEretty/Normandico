@@ -1,7 +1,7 @@
 import mysql.connector
 import time
 
-class database(object):
+class words(object):
     connexion : dict = {}
 
     def __init__(self,host:str,user:str,password:str,database:str): #Initialise la base de donnée
