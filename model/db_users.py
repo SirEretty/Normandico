@@ -1,5 +1,6 @@
 import mysql.connector
 import time
+import bcrypt
 
 class users(object):
     connexion : dict = {}
@@ -23,10 +24,10 @@ class users(object):
                     try:
                         c.execute('''
                             CREATE TABLE IF NOT EXISTS users (
-                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                username TEXT NOT NULL,
-                                email TEXT NOT NULL,
-                                password_hash TEXT NOT NULL
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                username VARCHAR(255) NOT NULL,
+                                email VARCHAR(255) NOT NULL,
+                                password_hash VARCHAR(255) NOT NULL
                             )
                         ''')
                         db.close()
@@ -49,11 +50,13 @@ class users(object):
             with mysql.connector.connect(**self.connexion) as db:
                 db.autocommit = True
                 with db.cursor() as c:
-                    
+                    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('UTF-8')
+                    print(hashed_password)
+
                     try:
                         c.execute(f'''
                             INSERT INTO users (username, email, password_hash)
-                            VALUES ({username}, {email}, {password})
+                            VALUES ('{username}', '{email}', '{hashed_password}')
                         ''')
                         db.close()
                         return True
@@ -77,11 +80,16 @@ class users(object):
                 db.autocommit = True
                 with db.cursor() as c:
                     try:
-                        c.execute('''
+                        c.execute(f'''
                             SELECT * FROM users
-                            WHERE email = ? AND password_hash = ?
-                        ''', (email, password))
-                        return cursor.fetchone() is not None
+                            WHERE email = {email}
+                        ''')
+                        
+                        print(c.fetchone())
+
+                        if c.fetchone() is not None and bcrypt.checkpw(password.encode('utf-8'), c.fetchone()[2]):
+                            
+                            c.fetchone() is not None
                     except mysql.connector.Error as err:
                         error = str(err)
                         print(f"[DATABSE][CREATEDATABASE] {currentTime} {error}")
