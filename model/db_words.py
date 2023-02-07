@@ -186,3 +186,36 @@ class words(object):
             print(f"[DATABASE][GETWORD] {currentTime} Impossible de se connecter à la base de données")
             print(f"[DATABASE][GETWORD] {currentTime} {error1}")
             db.close()
+
+    def getAllWord(self):
+        currentTime = time.strftime("%x-%X")
+        try:
+            with mysql.connector.connect(**self.connexion) as db:
+                with db.cursor(buffered=True) as c:
+                    try:
+                        c.execute(f"SELECT id, fr, normand FROM dictionary")
+                        db.commit()
+                        result = c.fetchall()
+                        print (result)
+                        db.close()
+                    except mysql.connector.Error as err:
+                        print(f"[DATABASE][GETWORD] {currentTime} Impossible de récupérer les mots!")
+                        print(f"[DATABASE][GETWORD] {currentTime} {error1}")
+                        db.close()
+                        return None
+                    
+                    database = []
+                    for word in result:
+                        temp = {
+                            'id' : word[0],
+                            'fr' : word[1],
+                            'normand' : word[2]
+                            }
+                        database.append(temp)
+                    return database
+
+        except mysql.connector.Error as err:
+            error1 = str(err)
+            print(f"[DATABASE][GETWORD] {currentTime} Impossible de se connecter à la base de données")
+            print(f"[DATABASE][GETWORD] {currentTime} {error1}")
+            db.close()

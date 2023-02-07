@@ -72,3 +72,7 @@ def searchWord(word,language):
         return (f""" 
             <h1> {word} n'a pas été trouvé ! </h1>
         """)
+
+@app.route(f"{router}",methods=["GET"])
+def getAllWords():
+    return jsonify(db.getAllWord())
