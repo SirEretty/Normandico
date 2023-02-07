@@ -43,9 +43,9 @@ class words(object):
             print(f"[DATABASE][INTABLE] {currentTime} {error1}")
             return False
 
-    def word_exists(self,wordFrench:str): #Vérifies si les mots existent dans les tables
+    def word_exists(self,word:str): #Vérifies si les mots existent dans les tables
         currentTime = time.strftime("%x-%X")
-        print(f"[DATABASE][INTABLE] {currentTime} Vérification du mot {wordFrench} dans la table 'dictionnary'.")
+        print(f"[DATABASE][INTABLE] {currentTime} Vérification du mot {word} dans la table 'dictionnary'.")
 
         try:
             with mysql.connector.connect(**self.connexion) as db:
@@ -55,23 +55,31 @@ class words(object):
                         c.execute(f"""
                             SELECT id
                             FROM dictionary
-                            WHERE fr = '{wordFrench}'
+                            WHERE fr = '{word}'
                         """)
                         result = c.fetchone()
 
-                        if result: 
-                            print(f"[DATABASE][INTABLE] {currentTime} le mot {wordFrench} est présent dans la table.")
-                            db.close()
+                        if result != None: 
                             return result[0]
-                        else:
-                            print(f"[DATABASE][INTABLE] {currentTime} le mot {wordFrench} n'est pas présent dans la table 'french'.")
-                            db.close()
-                            return None
+
+                        c.execute(f"""
+                            SELECT id
+                            FROM dictionary
+                            WHERE normand = '{word}'
+                        """)
+                        result = c.fetchone()
+
+                        if result != None: 
+                            return result[0]
+
+                        print(f"[DATABASE][INTABLE] {currentTime} le mot {word} n'est pas présent dans la table 'french'.")
+                        db.close()
+                        return False
                     except mysql.connector.Error as err:
                         error1 = str(err)
                         db.close()
                         print(f"[DATABSE][INTABLE] {currentTime} {error1}")
-                        return None
+                        return False
 
         except mysql.connector.Error as err:
             error1 = str(err)
@@ -82,10 +90,7 @@ class words(object):
     def addWord(self,wordFrench:str,wordNormand:str): #Ajoutes des mots dans la base de donnée
         currentTime = time.strftime("%x-%X")
 
-        if (self.word_exists(wordFrench)):
-            print(f"[DATABASE][ADDWORD] {currentTime} Ajout du mot français {wordFrench} et du mot normand {wordNormand} dans la base de données.")
-        else:
-            print(f"[DATABASE][ADDWORD] {currentTime} Les mots {wordFrench} et {wordNormand} sont déjà dans la base de donnée.")
+        if self.word_exists(wordFrench) != False and self.word_exists(wordNormand) != False:
             return False
         try:
             with mysql.connector.connect(**self.connexion) as db:
@@ -157,22 +162,18 @@ class words(object):
 
     def getWord(self,ID):
         currentTime = time.strftime("%x-%X")
-
         try:
             with mysql.connector.connect(**self.connexion) as db:
-                with db.cursor() as c:
-                    
+                with db.cursor(buffered=True) as c:
                     try:
                         c.execute(f"SELECT fr, normand FROM dictionary WHERE id = {ID};")
                         db.commit()
                         result = c.fetchone()
-                        c.close()
                         db.close()
                     except mysql.connector.Error as err:
-                        print(f"[DATABASE][MODIFYWORD] {currentTime} Impossible de récupérer le mot!")
-                        print(f"[DATABASE][MODIFYWORD] {currentTime} {error1}")
+                        print(f"[DATABASE][GETWORD] {currentTime} Impossible de récupérer le mot!")
+                        print(f"[DATABASE][GETWORD] {currentTime} {error1}")
                         db.close()
-                        c.close()
                         return None
 
                     if result:
