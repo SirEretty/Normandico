@@ -106,8 +106,9 @@ class users(object):
             print(f"[DATABASE][INTABLE] {currentTime} {error1}")
             return False
     
-    def generateTokenAuth(self,email,password,user):
-        token = (email + password + user).encode('utf-8')
+    def generate_Token(self,username):
+        currentTime = time.strftime("%x-%X")
+        token = {'username': username,'exp': int(time.time() + 3600)}
         hashed_token = bcrypt.hashpw(token, bcrypt.gensalt()).decode('UTF-8')
 
         try:
