@@ -27,7 +27,8 @@ class users(object):
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 username VARCHAR(255) NOT NULL,
                                 email VARCHAR(255) NOT NULL,
-                                password_hash VARCHAR(255) NOT NULL
+                                password_hash VARCHAR(255) NOT NULL,
+                                token_auth VARCHAR(255) DEFAULT NULL
                             )
                         ''')
                         db.close()
@@ -51,7 +52,6 @@ class users(object):
                 db.autocommit = True
                 with db.cursor() as c:
                     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('UTF-8')
-                    print(hashed_password)
 
                     try:
                         c.execute(f'''
@@ -82,14 +82,20 @@ class users(object):
                     try:
                         c.execute(f'''
                             SELECT * FROM users
-                            WHERE email = {email}
+                            WHERE email = '{email}'
                         ''')
+                        result = c.fetchone()
                         
-                        print(c.fetchone())
+                        pswdEncoded : bytes = bytes(password.encode('utf-8'))
+                        print(pswdEncoded)
+                        resultEncoded : bytes = bytes(result[3].encode('utf-8'))
+                        print(resultEncoded)
 
-                        if c.fetchone() is not None and bcrypt.checkpw(password.encode('utf-8'), c.fetchone()[2]):
-                            
-                            c.fetchone() is not None
+                        if c.fetchone() == None and bcrypt.checkpw(pswdEncoded, resultEncoded):
+                            return True
+                        else:
+                            return False
+                        
                     except mysql.connector.Error as err:
                         error = str(err)
                         print(f"[DATABSE][CREATEDATABASE] {currentTime} {error}")
@@ -99,3 +105,32 @@ class users(object):
             print(f"[DATABASE][INTABLE] {currentTime} Impossible de se connecter à la base de données")
             print(f"[DATABASE][INTABLE] {currentTime} {error1}")
             return False
+    
+    def generateTokenAuth(self,email,password,user):
+        token = (email + password + user).encode('utf-8')
+        hashed_token = bcrypt.hashpw(token, bcrypt.gensalt()).decode('UTF-8')
+
+        try:
+            with mysql.connector.connect(**self.connexion) as db:
+                db.autocommit = True
+                with db.cursor() as c:
+                    try:
+                        c.execute(f'''
+                            
+                        ''')
+                        db.close()
+                        return True
+                    except mysql.connector.Error as err:
+                        error = str(err)
+                        print(f"[DATABSE][CREATEDATABASE] {currentTime} {error}")
+                        return False
+
+        except mysql.connector.Error as err:
+            error1 = str(err)
+            print(f"[DATABASE][INTABLE] {currentTime} Impossible de se connecter à la base de données")
+            print(f"[DATABASE][INTABLE] {currentTime} {error1}")
+            return False
+
+        return hashed_token
+
+    def checkAuth(authToken,userToken)

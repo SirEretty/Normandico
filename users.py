@@ -23,6 +23,7 @@ def main():
 def addAccount(user,email,pwsd):
     return jsonify(db.add_user(user,email,pwsd))
 
-@app.route(f"{router}/email=<email>&pswd=<pwsd>")
+@app.route(f"{router}connect/email=<email>&pswd=<pwsd>")
 def checkMail(email,pwsd):
-    db.check_user(email,pwsd)
+    if db.check_user(email,pwsd):
+        pass
