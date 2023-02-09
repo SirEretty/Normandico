@@ -1,8 +1,6 @@
-from flask import Flask
-from flask import request
-from flask import jsonify
-from flask import render_template
-from dictionnary import appdict
+from flask import Flask,request,jsonify,render_template
+import requests as req
+from blueprints.dictionnary import appdict
 from markupsafe import escape
 import json
 
@@ -16,4 +14,18 @@ def main():
 
 @app.route("/words/")
 def renderWords():
-    return render_template("dictionnary.html")
+    r = req.get(request.environ['HTTP_REFERER']+"api/words/")
+    words = r.json()
+
+    html = ""
+
+    for word in words:
+        html += f"""
+            <tr>
+                <td>{word['id']}</td>
+                <td>{word['fr']}</td>
+                <td>{word['normand']}</td>
+            </tr>
+        """
+
+    return render_template("dictionnary.html", tableWords = html)

@@ -19,7 +19,7 @@
         <input type="submit" value="submit">
     </form>
 
-    <h1>Modifier un mot</h1>
+    <h1>Supprimer un mot</h1>
     <form action="/api/words/delete" method="post">
         <label for="id">ID:</label>
         <input type="text" name="id" id="id">
@@ -37,4 +37,20 @@
         </select>
         <input type="submit" value="submit">
     </form>
+
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Français</th>
+                    <th>Normand</th>
+                </tr>
+            </thead>
+        {% autoescape false %}
+        {{tableWords}}
+        {% endautoescape %}
+        </table>
+    </div>
+
 </html>
