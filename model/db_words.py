@@ -1,9 +1,12 @@
 import mysql.connector
+from mysql.connector import errorcode
 import time
+import logging
 
-class words(object):
-    connexion : dict = {}
+FORMAT = '%(asctime)s %(message)s'
+logging.basicConfig(format=FORMAT)
 
+class Dict(object):
     def __init__(self,host:str,user:str,password:str,database:str): #Initialise la base de donnée
         self.connexion = {
             "host" : host,
@@ -11,211 +14,181 @@ class words(object):
             "password" : password,
             "database" : database
         }
+        self.cnx = mysql.connector
         self.createDatabase()
 
-    def createDatabase(self): #Création de la base de donnée et de ses tables
-        currentTime = time.strftime("%x-%X")
-        print(f"[DATABASE][CREATEDATABASE] {currentTime} Création de la base de donnée et de ses tables.")
-        
+    def connect_database(self):
         try:
-            with mysql.connector.connect(**self.connexion) as db:
-                db.autocommit = True
-                with db.cursor() as c:
-                    
-                    try: #Créer la table french
-                        c.execute("""
-                           CREATE TABLE dictionary (
-                                id INT AUTO_INCREMENT PRIMARY KEY,
-                                fr VARCHAR(255) NOT NULL,
-                                normand VARCHAR(255) NOT NULL
-                            );
-                        """)
-                        print(f"[DATABASE][CREATEDATABASE] {currentTime} La table 'dictionary' a été crée.")
-                        db.close()
-                        return True
-                    except mysql.connector.Error as err:
-                        error = str(err)
-                        print(f"[DATABSE][CREATEDATABASE] {currentTime} {error}")
-                        return False
+            cnx = mysql.connector.connect(**self.connexion)
         except mysql.connector.Error as err:
-            error1 = str(err)
-            print(f"[DATABASE][INTABLE] {currentTime} Impossible de se connecter à la base de données")
-            print(f"[DATABASE][INTABLE] {currentTime} {error1}")
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                logging.error("Something is wrong with your user name or password")
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                logging.error("Database does not exist")
+            else:
+                logging.error(f"{err}")
+            return None
+        return cnx
+
+    def createDatabase(self): #Création de la base de donnée et de ses tables
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
             return False
+        
+        cnx.autocommit = True
+        c = cnx.cursor()
+
+        try:
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS dictionary (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    fr VARCHAR(255) NOT NULL,
+                    normand VARCHAR(255) NOT NULL
+                );
+            """)
+        except mysql.connector.Error as err:
+            cnx.close()
+            logging.error(f"{err}")
+            return False
+        cnx.close()
+        return True
 
     def word_exists(self,word:str): #Vérifies si les mots existent dans les tables
-        currentTime = time.strftime("%x-%X")
-        print(f"[DATABASE][INTABLE] {currentTime} Vérification du mot {word} dans la table 'dictionnary'.")
-
-        try:
-            with mysql.connector.connect(**self.connexion) as db:
-                with db.cursor() as c:
-                    
-                    try: #Récupères la donnée dans la colonne word de la table dictionnary
-                        c.execute(f"""
-                            SELECT id
-                            FROM dictionary
-                            WHERE fr = '{word}'
-                        """)
-                        result = c.fetchone()
-
-                        if result != None: 
-                            return result[0]
-
-                        c.execute(f"""
-                            SELECT id
-                            FROM dictionary
-                            WHERE normand = '{word}'
-                        """)
-                        result = c.fetchone()
-
-                        if result != None: 
-                            return result[0]
-
-                        print(f"[DATABASE][INTABLE] {currentTime} le mot {word} n'est pas présent dans la table 'french'.")
-                        db.close()
-                        return False
-                    except mysql.connector.Error as err:
-                        error1 = str(err)
-                        db.close()
-                        print(f"[DATABSE][INTABLE] {currentTime} {error1}")
-                        return False
-
-        except mysql.connector.Error as err:
-            error1 = str(err)
-            print(f"[DATABASE][INTABLE] {currentTime} Impossible de se connecter à la base de données")
-            print(f"[DATABASE][INTABLE] {currentTime} {error1}")
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
             return False
+        c = cnx.cursor()
+                    
+        c.execute(f"""
+            SELECT id
+            FROM dictionary
+            WHERE fr = '{word}'
+        """)
+        result = c.fetchone()
+        if result != None: 
+            return result[0]
+
+        c.execute(f"""
+            SELECT id
+            FROM dictionary
+            WHERE normand = '{word}'
+        """)
+        result = c.fetchone()
+        if result != None: 
+            return result[0]
+
+        cnx.close()
+        return False
             
     def addWord(self,wordFrench:str,wordNormand:str): #Ajoutes des mots dans la base de donnée
-        currentTime = time.strftime("%x-%X")
-
         if self.word_exists(wordFrench) != False and self.word_exists(wordNormand) != False:
             return False
-        try:
-            with mysql.connector.connect(**self.connexion) as db:
-                with db.cursor() as c:
-                    
-                    #Ajoutes le mot français et le mot normand dans la table 'dictionaru'
-                    print(f"[DATABASE][ADDWORD] {currentTime} INSERT INTO dictionary (fr,normand) VALUES ('{wordFrench}','{wordNormand}')")
-                    try:
-                        c.execute(f"INSERT INTO dictionary (fr,normand) VALUES ('{wordFrench}','{wordNormand}')")
-                        db.commit()
-                        print(f"[DATABASE][ADDWORD] {currentTime} COMMIT effectué!")
-                        db.close()
-                        print(f"[DATABASE][ADDWORD] {currentTime} Les mots {wordFrench} et {wordNormand} ont été rajoutés dans les tables.")
-                        return True
-                    except mysql.connector.Error as err:
-                        error1 = str(err)
-                        print(f"[DATABSE][ADDWORD] {currentTime} {error1}")
-                        db.close()
-                        return False
-        except mysql.connector.Error as err:
-            error1 = str(err)
-            print(f"[DATABASE][INTABLE] {currentTime} Impossible de se connecter à la base de données")
-            print(f"[DATABASE][INTABLE] {currentTime} {error1}")
+        
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
             return False
+        c = cnx.cursor()
+                    
+        try:
+            c.execute(f"INSERT INTO dictionary (fr,normand) VALUES ('{wordFrench}','{wordNormand}')")
+        except mysql.connector.Error as err:
+            cnx.rollback()
+            cnx.close()
+            logging.error(f"{err}")
+            return False
+        cnx.commit()
+        cnx.close()
+        return True
 
     def removeWord(self,ID):
-        currentTime = time.strftime("%x-%X")
-        try:
-            with mysql.connector.connect(**self.connexion) as db:
-                with db.cursor() as c:
-                    print(f"[DATABASE][REMOVEWORD] DELETE FROM dictionary WHERE id = {ID}")
-                    try:
-                        c.execute(f"DELETE FROM dictionary WHERE id = {ID};")
-                        db.commit()
-                        print(f"[DATABASE][REMOVEWORD] {currentTime} COMMIT executé.")
-                        db.close()
-                        return True
-                    except:
-                        print(f"[DATABASE][REMOVEWORD] {currentTime} COMMIT non executé.")
-                        db.close()
-                        return False
-        except mysql.connector.Error as err:
-            error1 = str(err)
-            print(f"[DATABASE][INTABLE] {currentTime} Impossible de se connecter à la base de données")
-            print(f"[DATABASE][INTABLE] {currentTime} {error1}")
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
             return False
+        c = cnx.cursor()
+        
+        try:
+            c.execute(f"DELETE FROM dictionary WHERE id = {ID};")
+        except mysql.connector.Error as err:
+            cnx.rollback()
+            cnx.close()
+            logging.error(f"{err}")
+            return False
+        cnx.commit()
+        cnx.close()
+        return True
 
     def updateWord(self,ID,frenchWord,normandWord):
-        currentTime = time.strftime("%x-%X")
+        if self.word_exists(frenchWord) != False and self.word_exists(normandWord) != False:
+            return False
+        
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
+            return False
+        c = cnx.cursor()
+
         try:
-            with mysql.connector.connect(**self.connexion) as db:
-                with db.cursor() as c:
-                    print(f"[DATABASE][MODIFYWORD] {currentTime} UPDATE dictionary SET fr = '{frenchWord}', normand = '{normandWord}' WHERE ID = {ID};")
-                    try:
-                        c.execute(f"UPDATE dictionary SET fr = '{frenchWord}', normand = '{normandWord}' WHERE ID = {ID};")
-                        db.commit()
-                        print(f"[DATABASE][MODIFYWORD] {currentTime} COMMIT executé.")
-                        db.close()
-                        return True
-                    except mysql.connector.Error as err:
-                        print(f"[DATABASE][MODIFYWORD] {currentTime} Impossible de modifier!")
-                        print(f"[DATABASE][MODIFYWORD] {currentTime} {error1}")
-                        db.close()
-                        return False
+            c.execute(f"UPDATE dictionary SET fr = '{frenchWord}', normand = '{normandWord}' WHERE ID = {ID};")
         except mysql.connector.Error as err:
-            error1 = str(err)
-            print(f"[DATABASE][MODIFYWORD] {currentTime} Impossible de se connecter à la base de données")
-            print(f"[DATABASE][MODIFYWORD] {currentTime} {error1}")
+            cnx.rollback()
+            cnx.close()
+            logging.error(f"{err}")
+            return False
+        cnx.commit()
+        cnx.close()
+        return True
 
     def getWord(self,ID):
-        currentTime = time.strftime("%x-%X")
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
+            return None
+        c = cnx.cursor(buffered=True)
+
         try:
-            with mysql.connector.connect(**self.connexion) as db:
-                with db.cursor(buffered=True) as c:
-                    try:
-                        c.execute(f"SELECT fr, normand FROM dictionary WHERE id = {ID};")
-                        db.commit()
-                        result = c.fetchone()
-                        db.close()
-                    except mysql.connector.Error as err:
-                        print(f"[DATABASE][GETWORD] {currentTime} Impossible de récupérer le mot!")
-                        print(f"[DATABASE][GETWORD] {currentTime} {error1}")
-                        db.close()
-                        return None
-
-                    if result:
-                        return {"fr": result[0], "normand": result[1]}
-                    else:
-                        return None
-
+            c.execute(f"SELECT fr, normand FROM dictionary WHERE id = {ID};")
         except mysql.connector.Error as err:
-            error1 = str(err)
-            print(f"[DATABASE][GETWORD] {currentTime} Impossible de se connecter à la base de données")
-            print(f"[DATABASE][GETWORD] {currentTime} {error1}")
-            db.close()
+            cnx.rollback()
+            cnx.close()
+            logging.error(f"{err}")
+            return None
+        cnx.commit()
+        result = c.fetchone()
+        cnx.close()
+                    
+        if result:
+            return {"fr": result[0], "normand": result[1]}
+        else:
+            return None
 
     def getAllWord(self):
-        currentTime = time.strftime("%x-%X")
-        try:
-            with mysql.connector.connect(**self.connexion) as db:
-                with db.cursor(buffered=True) as c:
-                    try:
-                        c.execute(f"SELECT id, fr, normand FROM dictionary")
-                        db.commit()
-                        result = c.fetchall()
-                        print (result)
-                        db.close()
-                    except mysql.connector.Error as err:
-                        print(f"[DATABASE][GETWORD] {currentTime} Impossible de récupérer les mots!")
-                        print(f"[DATABASE][GETWORD] {currentTime} {error1}")
-                        db.close()
-                        return None
-                    
-                    database = []
-                    for word in result:
-                        temp = {
-                            'id' : word[0],
-                            'fr' : word[1],
-                            'normand' : word[2]
-                            }
-                        database.append(temp)
-                    return database
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
+            return None
+        c = cnx.cursor(buffered=True)
 
+        try:
+            c.execute(f"SELECT id, fr, normand FROM dictionary")
         except mysql.connector.Error as err:
-            error1 = str(err)
-            print(f"[DATABASE][GETWORD] {currentTime} Impossible de se connecter à la base de données")
-            print(f"[DATABASE][GETWORD] {currentTime} {error1}")
-            db.close()
+            cnx.rollback()
+            cnx.close()
+            logging.error(f"{err}")
+            return None
+        cnx.commit()
+        result = c.fetchall()
+        cnx.close()
+
+        database = []
+        for word in result:
+            temp = {
+                'id' : word[0],
+                'fr' : word[1],
+                'normand' : word[2]
+                }
+            database.append(temp)
+        return database

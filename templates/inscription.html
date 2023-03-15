@@ -1,0 +1,18 @@
+<form action="/api/users/add" method="post">
+    <label for="user">Entrez votre nom d'utilisateur</label>
+    <input type="text" name="user">
+    <label for="email">Entrez votre adresse email</label>
+    <input type="text" name="email">
+    <label for="mdp">Entre votre mot de passe</label>
+    <input type="text" name="mdp">
+    <button type="submit">Connexion</button>
+</form>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <p class=flashes>
+    {% for message in messages %}
+      {{ message }}
+    {% endfor %}
+    </p>
+  {% endif %}
+{% endwith %}
