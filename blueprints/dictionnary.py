@@ -1,5 +1,8 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template,Flask,redirect,url_for
 from model.db_words import Dict
+from model.db_users import Users
+import requests as req
+import json
 from markupsafe import escape
 import json
 
@@ -11,12 +14,30 @@ connect = None
 with open("database.json","r") as f:
     connect = json.loads(f.read())
     f.close()
-db = Dict(connect['host'],connect['user'],connect['password'],connect['database'])
+db_dict = Dict(connect['host'],connect['user'],connect['password'],connect['database'])
+db_user = Users(connect['host'],connect['user'],connect['password'],connect['database'])
+
+@dict.route("/admin/")
+def render_words():
+    if db_user.check_token(request.cookies.get('user_token')) is False or "user_token" not in request.cookies:
+        return redirect(url_for('connexion'))
+    
+    words = db_dict.getAllWord()
+    html = ""
+    for word in words:
+        html += f"""
+            <tr>
+                <td>{word['id']}</td>
+                <td>{word['fr']}</td>
+                <td>{word['normand']}</td>
+            </tr>
+        """
+    return render_template("administration.html", tableWords = html)
 
 @dict.route(f"{router}get/<int:id>",methods=['GET'])
 def getWord(id):
     if request.method == "GET":
-        return jsonify(db.getWord(id))
+        return jsonify(db_dict.getWord(id))
 
 @dict.route(f"{router}add", methods=['POST'])
 def addWord():
@@ -24,7 +45,7 @@ def addWord():
         french = request.form["fr"]
         normand = request.form['normand']
 
-        if db.addWord(french,normand) == True:
+        if db_dict.addWord(french,normand) == True:
             return jsonify(True)
 
 @dict.route(f"{router}edit",methods=["POST"])
@@ -34,7 +55,7 @@ def updateWord():
         french = request.form["fr"]
         normand = request.form['normand']
 
-        if db.updateWord(id,french,normand):
+        if db_dict.updateWord(id,french,normand):
             return (f""" 
                 <h1> Changement effectué ! </h1>
             """)
@@ -45,8 +66,8 @@ def deleteWord():
     if request.method == "POST":
         id = request.form["id"]
 
-    if db.getWord(id):
-        if db.removeWord(id):
+    if db_dict.getWord(id):
+        if db_dict.removeWord(id):
             return (f"""
                 <h1>Le mot a été supprimé</h1>
             """)
@@ -61,12 +82,12 @@ def searchWord():
         word = request.form["word"]
         language = request.form["lang"]
 
-    if db.word_exists(word) != False:
+    if db_dict.word_exists(word) != False:
         match language:
             case "fr":
-                return jsonify(db.getWord(db.word_exists(word))['fr'])
+                return jsonify(db_dict.getWord(db_dict.word_exists(word))['fr'])
             case "normand":
-                return jsonify(db.getWord(db.word_exists(word))['normand'])
+                return jsonify(db_dict.getWord(db_dict.word_exists(word))['normand'])
             case _:
                 return (jsonify(False))
     else:
@@ -76,4 +97,4 @@ def searchWord():
 
 @dict.route(f"{router}",methods=["GET"])
 def getAllWords():
-    return jsonify(db.getAllWord())
+    return db_dict.getAllWord()

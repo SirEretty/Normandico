@@ -33,10 +33,12 @@ def add_user():
 @users.route(f"{router}connect",methods=['POST'])
 def connect_user():
     if request.method != "POST":
-        return render_template('404.html',reason = "L'email ou le mot de passe est vide"), 404
+        return abort(404,description = "La page n'a pas été trouvée !")
     if request.form['email'] == "" or request.form['mdp'] == "":
-        return render_template('404.html',reason = "L'email ou le mot de passe est vide"), 404
-
+        return abort(403,description = "L'email ou le mot de passe est vide")
+    if db.check_token(request.cookies.get('user_token')):
+        return render_template('index.html')
+    
     email = request.form['email']
     pwsd = request.form['mdp']
 
@@ -46,3 +48,5 @@ def connect_user():
         resp.set_cookie('user_email', user_email)
         resp.set_cookie('user_token', db.connect_user(email,pwsd))
         return resp
+    else:
+        return redirect(url_for('connexion'))

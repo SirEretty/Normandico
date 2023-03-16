@@ -1,6 +1,6 @@
 import mysql.connector
 from mysql.connector import errorcode
-import time
+from datetime import datetime, timedelta
 import bcrypt
 import logging
 
@@ -45,23 +45,13 @@ class Users(object):
                     username VARCHAR(255) NOT NULL,
                     email VARCHAR(255) NOT NULL,
                     password_hash VARCHAR(255) NOT NULL,
-                    grade VARCHAR(255) DEFAULT "user"
+                    grade VARCHAR(255) DEFAULT "user",
+                    token VARCHAR(255) DEFAULT NULL,
+                    delay TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
             ''')
         except mysql.connector.Error as err:
             logging.error(f"{err}")
-        
-        try:
-            c.execute('''
-                CREATE TABLE IF NOT EXISTS sessions (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    token VARCHAR(255) NOT NULL,
-                    delay TIMESTAMP NOT NULL
-                )
-            ''')
-        except mysql.connector.Error as err:
-            logging.error(f"{err}")
-        
         cnx.close()
         return True
 
@@ -124,19 +114,19 @@ class Users(object):
             return False
 
         if password is not None:
-            pswdEncoded : bytes = bytes(password.encode('utf-8'))
-            resultEncoded : bytes = bytes(result[3].encode('utf-8'))
-            if bcrypt.checkpw(pswdEncoded, resultEncoded):
+            pswdEncoded  = str(password)
+            resultEncoded = str(result[3])
+            
+            if bcrypt.checkpw(pswdEncoded.encode("utf-8"), resultEncoded.encode("utf-8")):
                 return True
             else:
                 return False
         
         return True
     
-    def connect_user(self,email,password):
-        if self.check_user(email,password) != True:
+    def get_id_by_email(self,email):
+        if self.check_user(email) != True:
             return False
-
         if self.connect_database() is not None:
             cnx = self.connect_database()
         else:
@@ -144,19 +134,44 @@ class Users(object):
         cnx.autocommit = True
         c = cnx.cursor()
 
-        delay = time.time() + (120 * 10)
-        token = f"{email}isConneted"
-        hashed_token = bcrypt.hashpw(token, bcrypt.gensalt()).decode('UTF-8')
-
         try:
             c.execute(f'''
-                INSERT INTO sessions (token, delay)
-                VALUES ('{token}', '{delay}')
+                SELECT id FROM users
+                WHERE email = '{email}'
             ''')
         except mysql.connector.Error as err:
             cnx.close()
             logging.error(f"{err}")
             return False
+        result = c.fetchone()
+        return result
+
+    def connect_user(self,email,password):
+        if self.check_user(email,password) != True:
+            return False
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
+            return False
+        cnx.autocommit = True
+        c = cnx.cursor()
+
+        time_delay = (datetime.now() + timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
+        pswd_bytes = (f"{email}isConneted").encode("utf-8")
+        hashed_token = bcrypt.hashpw(pswd_bytes, bcrypt.gensalt()).decode('utf-8')
+
+        try:
+            c.execute(f'''
+                UPDATE users
+                    SET
+                        token =  '{hashed_token}',
+                        delay = '{time_delay}'
+                WHERE email = '{email}'
+            ''')
+        except mysql.connector.Error as err:
+            cnx.close()
+            logging.error(f"{err}")
+            return None
         cnx.close() 
         return hashed_token
 
@@ -170,7 +185,7 @@ class Users(object):
 
         try:
             c.execute(f'''
-                SELECT token FROM sessions
+                SELECT token,delay FROM users
                 WHERE token = '{token}'
             ''')
         except mysql.connector.Error as err:
@@ -179,13 +194,37 @@ class Users(object):
             return False
         
         result = c.fetchone()
-        if result != None:
+        if result == None or result[1] == None:
             cnx.close()
-            return True
-        
+            return False
+        if int(result[1].strftime('%Y%m%d%H%M%S')) < int(datetime.now().strftime('%Y%m%d%H%M%S')):
+            cnx.close()
+            self.remove_token(token)
+            return False
+            
         cnx.close()
-        return False
+        return True
+
+    def remove_token(self,token):
+        if self.connect_database() is not None:
+            cnx = self.connect_database()
+        else:
+            return False
+        cnx.autocommit = True
+        c = cnx.cursor()
+
+        try:
+            c.execute(f'''
+                UPDATE users
+                SET
+                    token = NULL
+                WHERE token = '{token}'
+            ''')
+        except mysql.connector.Error as err:
+            cnx.close()
+            logging.error(f"{err}")
+            return False
         
-         
+        return True
 
 
