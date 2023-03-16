@@ -1,3 +1,5 @@
+{% extends "layout.html" %}
+{% block content %}
 <form action="/api/users/connect" method="post">
     <label for="email">Entrez votre adresse email</label>
     <input type="text" name="email">
@@ -5,4 +7,4 @@
     <input type="text" name="mdp">
     <button type="submit">Connexion</button>
 </form>
-<a href="/inscription/">S'inscrire</a>
+{% endblock %}

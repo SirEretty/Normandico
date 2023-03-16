@@ -1,4 +1,5 @@
-<html>
+{% extends "layout.html" %}
+{% block content %}
     <h1>Ajouter un mot</h1>
     <form action="/api/words/add" method="post">
         <label for="fr">FR</label>
@@ -52,5 +53,4 @@
         {% endautoescape %}
         </table>
     </div>
-
-</html>
+{% endblock %}

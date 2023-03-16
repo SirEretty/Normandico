@@ -45,9 +45,8 @@ class Users(object):
                     username VARCHAR(255) NOT NULL,
                     email VARCHAR(255) NOT NULL,
                     password_hash VARCHAR(255) NOT NULL,
-                    grade VARCHAR(255) DEFAULT "user",
                     token VARCHAR(255) DEFAULT NULL,
-                    delay TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    delay TIMESTAMP
                 )
             ''')
         except mysql.connector.Error as err:
@@ -66,16 +65,6 @@ class Users(object):
         
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('UTF-8')
 
-        try:
-            c.execute(f'''
-                INSERT INTO users (username, email, password_hash)
-                VALUES ('{username}', '{email}', '{hashed_password}')
-            ''')
-        except mysql.connector.Error as err:
-            cnx.close()
-            logging.error(f"{err}")
-            return False
-        
         try:
             c.execute(f'''
                 INSERT INTO users (username, email, password_hash)

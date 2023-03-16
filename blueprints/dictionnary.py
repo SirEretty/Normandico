@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template,Flask,redirect,url_for
+from flask import Blueprint, request, jsonify, render_template,Flask,redirect,url_for,abort
 from model.db_words import Dict
 from model.db_users import Users
 import requests as req
@@ -20,18 +20,23 @@ db_user = Users(connect['host'],connect['user'],connect['password'],connect['dat
 @dict.route("/admin/")
 def render_words():
     if db_user.check_token(request.cookies.get('user_token')) is False or "user_token" not in request.cookies:
-        return redirect(url_for('connexion'))
+        return redirect(url_for('users.connexion'))
     
-    words = db_dict.getAllWord()
     html = ""
-    for word in words:
-        html += f"""
-            <tr>
-                <td>{word['id']}</td>
-                <td>{word['fr']}</td>
-                <td>{word['normand']}</td>
-            </tr>
-        """
+    try:
+        for word in db_dict.getAllWord():
+            html += f"""
+                <tr>
+                    <td>{word['id']}</td>
+                    <td>{word['fr']}</td>
+                    <td>{word['normand']}</td>
+                </tr>
+            """
+    except:
+        html = f"""
+                <tr>
+                </tr>
+            """
     return render_template("administration.html", tableWords = html)
 
 @dict.route(f"{router}get/<int:id>",methods=['GET'])
@@ -41,15 +46,19 @@ def getWord(id):
 
 @dict.route(f"{router}add", methods=['POST'])
 def addWord():
-    if request.method == "POST":
-        french = request.form["fr"]
-        normand = request.form['normand']
+    if request.method != "POST":
+        return abort('405')
+    french = request.form["fr"]
+    normand = request.form['normand']
 
-        if db_dict.addWord(french,normand) == True:
-            return jsonify(True)
+    if db_dict.addWord(french,normand) == True:
+        return jsonify(True)
 
 @dict.route(f"{router}edit",methods=["POST"])
 def updateWord():
+    if db_user.check_token(request.cookies.get('user_token')) is False or "user_token" not in request.cookies:
+        return redirect(url_for('users.connexion'))
+    
     if request.method == "POST":
         id = request.form["id"]
         french = request.form["fr"]
@@ -63,6 +72,9 @@ def updateWord():
 
 @dict.route(f"{router}delete",methods=["POST"])
 def deleteWord():
+    if db_user.check_token(request.cookies.get('user_token')) is False or "user_token" not in request.cookies:
+        return redirect(url_for('users.connexion'))
+    
     if request.method == "POST":
         id = request.form["id"]
 
