@@ -1,6 +1,15 @@
 {% extends "layout.html" %}
 {% block content %}
-<form action="/api/users/connect" method="post">
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="result">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% endwith %}
+<form action="/connexion/" method="post">
     <label for="email">Entrez votre adresse email</label>
     <input type="text" name="email">
     <label for="mdp">Entre votre mot de passe</label>

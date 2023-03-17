@@ -150,7 +150,7 @@ class Dict(object):
         c = cnx.cursor(buffered=True)
 
         try:
-            c.execute(f"SELECT fr, normand FROM dictionary WHERE id = {ID};")
+            c.execute(f"SELECT id, fr, normand FROM dictionary WHERE id = {ID};")
         except mysql.connector.Error as err:
             cnx.rollback()
             cnx.close()
@@ -161,7 +161,7 @@ class Dict(object):
         cnx.close()
                     
         if result:
-            return {"fr": result[0], "normand": result[1]}
+            return {"id":result[0],"fr": result[1], "normand": result[2]}
         else:
             return None
 
