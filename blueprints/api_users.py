@@ -2,17 +2,12 @@ from flask import Flask,Blueprint, request, jsonify, render_template, make_respo
 from model.db_users import Users
 from blueprints.api_dictionnary import api_dictionnary
 from markupsafe import escape
-import json
+import os
 
 api_users = Blueprint('api_users', __name__)
 router = "/api/users/"
 
-#Instance de la base de donnée
-connect = None
-with open("database.json","r") as f:
-    connect = json.loads(f.read())
-    f.close()
-db_users = Users(connect['host'],connect['user'],connect['password'],connect['database'])
+db_users = Users(os.environ['HOST'],os.environ['USER'],os.environ['PASSWORD'],os.environ['DATABASE'])
 
 @api_users.route(f"{router}add",methods=['POST'])
 def add_user(user,email,pwsd):

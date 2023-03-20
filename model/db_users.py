@@ -106,7 +106,7 @@ class Users(object):
             pswdEncoded  = str(password)
             resultEncoded = str(result[3])
             
-            if bcrypt.checkpw(pswdEncoded.encode("utf-8"), resultEncoded.encode("utf-8")):
+            if bcrypt.checkpw(pswdEncoded.encode('utf8'), resultEncoded.encode('utf8')):
                 return True
             else:
                 return False

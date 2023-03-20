@@ -2,20 +2,15 @@ from flask import Blueprint, request, jsonify, render_template,Flask,redirect,ur
 from model.db_words import Dict
 from model.db_users import Users
 import requests as req
-import json
+import os
 from markupsafe import escape
-import json
 
 api_dictionnary = Blueprint('api_dictionnary', __name__)
 router = "/api/words/"
 
 #Instance de la base de donnée
-connect = None
-with open("database.json","r") as f:
-    connect = json.loads(f.read())
-    f.close()
-db_dict = Dict(connect['host'],connect['user'],connect['password'],connect['database'])
-db_user = Users(connect['host'],connect['user'],connect['password'],connect['database'])
+db_dict = Dict(os.environ['HOST'],os.environ['USER'],os.environ['PASSWORD'],os.environ['DATABASE'])
+db_user = Users(os.environ['HOST'],os.environ['USER'],os.environ['PASSWORD'],os.environ['DATABASE'])
 
 @api_dictionnary.route(f"{router}get",methods=['GET'])
 def getWord(word=None,id=None):    

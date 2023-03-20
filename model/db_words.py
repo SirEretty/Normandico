@@ -3,6 +3,7 @@ from mysql.connector import errorcode
 import time
 import logging
 
+
 FORMAT = '%(asctime)s %(message)s'
 logging.basicConfig(format=FORMAT)
 
