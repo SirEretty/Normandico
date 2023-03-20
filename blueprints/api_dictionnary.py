@@ -18,28 +18,20 @@ db_dict = Dict(connect['host'],connect['user'],connect['password'],connect['data
 db_user = Users(connect['host'],connect['user'],connect['password'],connect['database'])
 
 @api_dictionnary.route(f"{router}get",methods=['GET'])
-def getWord(word=None,lang=None,id=None):    
+def getWord(word=None,id=None):    
     
     if id == None:
         id  = request.args.get('id', None)
     if word == None:
         word  = request.args.get('word', None)
-    if lang == None:
-        lang = request.args.get('lang', None)
 
     if id is not None or id == "":
         return jsonify(db_dict.getWord(id))
-    elif word is None and lang is None:
+    elif word is None:
         return jsonify(db_dict.getAllWord())
     
     if db_dict.word_exists(word) != False:
-        match lang:
-            case "fr":
-                return jsonify(db_dict.getWord(db_dict.word_exists(word))['fr'])
-            case "normand":
-                return jsonify(db_dict.getWord(db_dict.word_exists(word))['normand'])
-            case _:
-                return jsonify(False)
+        return jsonify(db_dict.getWord(db_dict.word_exists(word)))
     return jsonify(False)
 
 @api_dictionnary.route(f"{router}add", methods=['POST'])

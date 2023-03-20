@@ -7,7 +7,7 @@ router = Blueprint('router', __name__)
 
 @router.route("/")
 def main():
-    return render_template("index.html")
+    return render_template("dictionnary.html")
 
 @router.route("/rechercher",methods=['POST'])
 def rechercher():
@@ -19,8 +19,15 @@ def rechercher():
         flash("Veuillez remplir la barre de recherche")
         return redirect('/')
 
-    if getWord(word=request.form['mot'],lang=request.form['lang']).get_json() != False:
-        response = getWord(word=request.form['mot'],lang=request.form['lang']).get_json()
+    if getWord(word=request.form['mot']).get_json() != False:
+        data = getWord(word=request.form['mot']).get_json()
+        match request.form['lang']:
+            case "fr":
+                response = data['fr']
+            case "normand":
+                response = data['normand']
+            case _:
+                response="Le mot recherché n'est pas référencé!"
         flash(response)
         return redirect('/')
     else:
@@ -110,7 +117,7 @@ def supprimer_mot():
         flash("Veuillez vous connecter à votre compte !")
         return redirect('/connexion/')
     
-    if deleteWord(id=request.form['id'],token=request.cookies.get['user_token']).get_json() != False:
+    if deleteWord(id=request.form['id'],token=request.cookies.get('user_token')).get_json() != False:
         flash("Le mot a été supprimé !")
         return redirect('/administration/')
     else:
@@ -125,9 +132,9 @@ def obtenir_mot():
         flash("Veuillez vous connecter à votre compte !")
         return redirect('/connexion/')
     
-    if getWord(word=request.form['mot'],lang=request.form['lang']).get_json() != False:
-        response = getWord(word=request.form['mot'],lang=request.form['lang']).get_json()
-        flash(response)
+    if getWord(word=request.form['mot']).get_json() != False:
+        data = getWord(word=request.form['mot']).get_json()
+        flash(f"ID: {data['id']} | Français: {data['fr']} | Normand: {data['normand']}")
         return redirect('/administration/')
     else:
         flash("Le mot n'a pas été trouvé !")

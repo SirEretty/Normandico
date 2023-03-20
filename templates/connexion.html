@@ -1,19 +1,30 @@
 {% extends "layout.html" %}
 {% block content %}
-{% with messages = get_flashed_messages() %}
+<app id="connexion">
+    <form action="/connexion/" method="post">
+        <div>
+            <label for="email">Nom d'utilisateur</label>
+            <input type="text" name="email" required>
+        </div>
+        <div>
+            <label for="mdp">Entre votre mot de passe</label>
+            <input type="password" name="mdp"required>
+        </div>
+        <div>
+            <button type="submit">Connexion</button>
+        </div>
+    </form>
+
+    {% with messages = get_flashed_messages() %}
     {% if messages %}
         <div class="result">
         {% for message in messages %}
             <p>{{ message }}</p>
         {% endfor %}
-      </div>
+    </div>
     {% endif %}
     {% endwith %}
-<form action="/connexion/" method="post">
-    <label for="email">Entrez votre adresse email</label>
-    <input type="text" name="email">
-    <label for="mdp">Entre votre mot de passe</label>
-    <input type="text" name="mdp">
-    <button type="submit">Connexion</button>
-</form>
+    <hr></hr>
+
+</app>
 {% endblock %}

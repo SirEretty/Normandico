@@ -93,7 +93,7 @@ class Dict(object):
         c = cnx.cursor()
                     
         try:
-            c.execute(f"INSERT INTO dictionary (fr,normand) VALUES ('{wordFrench}','{wordNormand}')")
+            c.execute(f"INSERT INTO dictionary (fr,normand) VALUES ('{wordFrench.lower()}','{wordNormand.lower()}')")
         except mysql.connector.Error as err:
             cnx.rollback()
             cnx.close()
@@ -132,7 +132,7 @@ class Dict(object):
         c = cnx.cursor()
 
         try:
-            c.execute(f"UPDATE dictionary SET fr = '{frenchWord}', normand = '{normandWord}' WHERE ID = {ID};")
+            c.execute(f"UPDATE dictionary SET fr = '{frenchWord.lower()}', normand = '{normandWord.lower()}' WHERE ID = {ID};")
         except mysql.connector.Error as err:
             cnx.rollback()
             cnx.close()

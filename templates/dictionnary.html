@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<app id="dictionnary">
+    <form action="/rechercher" method="post">
+        <div>
+            <label for="mot">Mot à rechercher:</label>
+            <input type="text" name="mot" id="mot" required>
+        </div>
+        <div>
+            <label for="lang">Language</label>
+            <select name="lang" id="lang" required>
+                <option value="fr">Français</option>
+                <option value="normand">Normand</option>
+            </select>
+        </div>
+        <div>
+            <input type="submit" value="submit">
+        </div>
+    </form>
+    
+    <hr></hr>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="result">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% endwith %}
+    </app>
+{% endblock %}

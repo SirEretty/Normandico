@@ -1,43 +1,72 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>Ajouter un mot</h1>
-    <form action="/administration/ajouter" method="post">
-        <label for="fr">FR</label>
-        <input type="text" name="fr" id="fr">
-        <label for="normand">Normand</label>
-        <input type="text" name="normand" id="normand">
-        <input type="submit" value="submit">
-    </form>
-
-    <h1>Modifier un mot</h1>
-    <form action="/administration/modifier" method="post">
-        <label for="id">ID:</label>
-        <input type="text" name="id" id="id">
-        <label for="fr">Français:</label>
-        <input type="text" name="fr" id="fr">
-        <label for="normand">Normand:</label>
-        <input type="text" name="normand" id="normand">
-        <input type="submit" value="submit">
-    </form>
-
-    <h1>Supprimer un mot</h1>
-    <form action="/administration/supprimer" method="post">
-        <label for="id">ID:</label>
-        <input type="text" name="id" id="id">
-        <input type="submit" value="submit">
-    </form>
-
-    <h1>Chercher un mot</h1>
-    <form action="/administration/mot" method="post">
-        <label for="mot">Mot à rechercher:</label>
-        <input type="text" name="mot" id="mot">
-        <label for="lang">Language</label>
-        <select name="lang" id="lang">
-            <option value="fr">Français</option>
-            <option value="normand">Normand</option>
-        </select>
-        <input type="submit" value="submit">
-    </form>
+<app id="admin">
+    <div class="admin-container">
+        <div class="form-admin">
+            <h1>Ajouter un mot</h1>
+            <form action="/administration/ajouter" method="post">
+                <div>
+                    <label for="fr">FR</label>
+                    <input type="text" name="fr" id="fr" required>
+                </div>
+                <div>
+                    <label for="normand">Normand</label>
+                    <input type="text" name="normand" id="normand" required>
+                </div>
+                <div>
+                    <input type="submit" value="submit">
+                </div>
+            </form>
+        </div>
+        
+        <div class="form-admin">
+            <h1>Modifier un mot</h1>
+            <form action="/administration/modifier" method="post">
+                <div>
+                    <label for="id">ID:</label>
+                    <input type="text" name="id" id="id" required>
+                </div>
+                <div>
+                    <label for="fr">Français:</label>
+                    <input type="text" name="fr" id="fr" required>
+                </div>
+                <div>
+                    <label for="normand">Normand:</label>
+                    <input type="text" name="normand" id="normand" required>
+                </div>
+                <div>
+                    <input type="submit" value="submit">
+                </div>
+            </form>
+        </div>
+    
+        <div class="form-admin">
+            <h1>Supprimer un mot</h1>
+            <form action="/administration/supprimer" method="post">
+            <div>
+                <label for="id">ID:</label>
+                <input type="text" name="id" id="id" required>
+            </div>
+            <div>
+                <input type="submit" value="submit">
+            </div>
+            </form>
+        </div>
+        
+        <div class="form-admin">
+            <h1>Chercher un mot</h1>
+            <form action="/administration/mot" method="post">
+                <div>
+                    <label for="mot">Mot à rechercher:</label>
+                    <input type="text" name="mot" id="mot" required>
+                </div>
+                <div>
+                    <input type="submit" value="submit">
+                </div>
+            </form>
+        </div>
+    </div>
+    
 
     {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -48,8 +77,9 @@
       </div>
     {% endif %}
     {% endwith %}
-
-    <div>
+    
+    <hr></hr>
+    <div class="tableau-admin">
         <table>
             <thead>
                 <tr>
@@ -63,4 +93,6 @@
         {% endautoescape %}
         </table>
     </div>
+</app>
+    
 {% endblock %}
